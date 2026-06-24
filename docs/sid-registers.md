@@ -29,6 +29,39 @@ Absolute address = **voice base + offset** (for per-voice registers), or
 
 Worked example: Voice 2 control register = `54279 + 4` = **54283** (`$D40B`).
 
+## Oscillator frequency (FREQ LO/HI → Hz)
+
+The 16-bit value `Fn` in FREQ LO/HI sets the pitch:
+
+```
+Fout = Fn × Fclk / 2^24      Fn = Fout × 2^24 / Fclk
+Fclk = 985248 Hz (PAL)   or   1022727 Hz (NTSC)
+```
+
+`Fn` is **linear in pitch**, so each octave up just **doubles** `Fn` (and each
+octave down halves it). That means you only need one octave of note values —
+multiply/divide by 2 to transpose. Octave 4, PAL, equal temperament (A4 = 440):
+
+| Note | Hz | Fn | hi | lo | Hex |
+|---|---:|---:|---:|---:|---|
+| C4  | 261.63 | 4455 | 17 | 103 | `$1167` |
+| C#4 | 277.18 | 4720 | 18 | 112 | `$1270` |
+| D4  | 293.66 | 5001 | 19 | 137 | `$1389` |
+| D#4 | 311.13 | 5298 | 20 | 178 | `$14B2` |
+| E4  | 329.63 | 5613 | 21 | 237 | `$15ED` |
+| F4  | 349.23 | 5947 | 23 |  59 | `$173B` |
+| F#4 | 369.99 | 6300 | 24 | 156 | `$189C` |
+| G4  | 392.00 | 6675 | 26 |  19 | `$1A13` |
+| G#4 | 415.30 | 7072 | 27 | 160 | `$1BA0` |
+| A4  | 440.00 | 7493 | 29 |  69 | `$1D45` |
+| A#4 | 466.16 | 7938 | 31 |   2 | `$1F02` |
+| B4  | 493.88 | 8410 | 32 | 218 | `$20DA` |
+
+Generate the full table or convert single values with
+[`../scripts/sid-freq.py`](../scripts/sid-freq.py) (e.g. `--note A4`,
+`--hz 440`, `--reg 7493`, `--ntsc`). Setting only FREQ HI (low byte 0) lands
+*near* a note but not on it — e.g. `hi=17` → 255.6 Hz, ~30 cents flat of C4.
+
 ## Global filter, volume & read-only registers (offset from `S`)
 
 | Offset | Hex | Addr (dec) | Addr (hex) | Register | Function |
@@ -67,6 +100,37 @@ The byte is just the sum of the bits you want. Common waveform + gate combos:
 | 32  | `$20` | Sawtooth, gate off |
 | 64  | `$40` | Pulse, gate off |
 | 128 | `$80` | Noise, gate off |
+
+## Filter cutoff frequency (FC LO/HI → Hz)
+
+The cutoff is an **11-bit** value assembled from the two registers:
+
+```
+FC = (FC_HI << 3) | (FC_LO & 7)      range 0..2047
+```
+
+Unlike the oscillator, cutoff in Hz has **no clean formula** — it's strongly
+chip-dependent and non-linear, and differs a lot between the two SID revisions.
+Treat these as ballpark only, and tune by ear:
+
+| Chip | Cutoff range | Rough behaviour |
+|---|---|---|
+| 6581 (old) | ~30 Hz – 12 kHz | Very non-linear; low end barely moves, steep curve high up |
+| 8580 (new) | ~0 – 12.5 kHz | Closer to linear, ≈ `FC × 6 Hz` as a first guess |
+
+Approximate cutoff for the high byte (FC_LO = 0), 8580-ish:
+
+| FC_HI | FC | ≈ Hz |
+|---:|---:|---:|
+| 0   | 0    | ~30 |
+| 32  | 256  | ~1.5 k |
+| 64  | 512  | ~3 k |
+| 128 | 1024 | ~6 k |
+| 192 | 1536 | ~9 k |
+| 255 | 2040 | ~12 k |
+
+For musical sweeps, just ramp `FC_HI` (`$D416`) and listen — the low 3 bits
+(`$D415`) are fine-tune you can usually leave at 0.
 
 ## Resonance / filter routing — offset `$17` (`$D417`)
 
