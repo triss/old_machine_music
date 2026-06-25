@@ -62,6 +62,9 @@ Generate the full table or convert single values with
 `--hz 440`, `--reg 7493`, `--ntsc`). Setting only FREQ HI (low byte 0) lands
 *near* a note but not on it — e.g. `hi=17` → 255.6 Hz, ~30 cents flat of C4.
 
+The **complete note table** for every octave (C1–B6, PAL + NTSC, exact `hi`/`lo`
+per note) is in [`sid-note-table.md`](sid-note-table.md).
+
 ## Global filter, volume & read-only registers (offset from `S`)
 
 | Offset | Hex | Addr (dec) | Addr (hex) | Register | Function |
