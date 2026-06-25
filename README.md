@@ -6,10 +6,11 @@ I will drive this all from a modernish laptop.
 
 I'll emulate the setup first.
 
-This repo will contain all the gumph I need to rig everything together, instriuctions on easily acquiring and potentially builds of tooling if required.
+This repo will contain all the gumph I need to rig everything together, instructions on easily acquiring and potentially builds of tooling if required.
 
 I will transmit serial data to the listening systems which will respond with sound and light.
 
 # Status - First steps
 
 Experiment with sending serial commands to a C64 emulator and document.
+At current only basic experiments for controlling the virtual SID chip in the VICE emulator.
